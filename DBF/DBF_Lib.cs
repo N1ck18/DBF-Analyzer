@@ -10,7 +10,7 @@ namespace DBF
     public static class DBF_Lib
     {
 
-        #region Проверка на валидность файла
+        #region Проверка на валидность файла по заголовку
         private static bool CheckForDBF(string path)
         {
             //Загружаем в память заголовок, на всякий случай, из него будем генерировать файл на выходе
@@ -21,7 +21,7 @@ namespace DBF
 
             // Читаем заголовок
             //
-            var buffer = new byte[32]; 
+            var buffer = new byte[32];
             fs.Read(buffer, 0, buffer.Length);
 
             // Проверяем тип файла по первому байту
@@ -60,47 +60,54 @@ namespace DBF
 
             // Проверка по заголовку
             //
-
+            //            
             // Количество записей
             //
-            buffer = new byte[4];
-            fs.Position = 0x04; //4
-            fs.Read(buffer, 0, buffer.Length);
-            int rowCount = buffer[0] + (buffer[1] * 0x100) + (buffer[2] * 0x10000) + (buffer[3] * 0x1000000);
+            //buffer = new byte[4];
+            //fs.Position = 0x04; //4
+            //fs.Read(buffer, 0, buffer.Length);
+            int i; // адрес(индекс) байт, эквивалентно fs.Position если делать через fs.Read
+
+            i = 4;
+            int rowCount = buffer[i] + (buffer[i + 1] * 0x100) + (buffer[i + 2] * 0x10000) + (buffer[i + 3] * 0x1000000);
 
             // Размер заголовка
             //
-            buffer = new byte[2];
-            fs.Position = 0x08;
-            fs.Read(buffer, 0, buffer.Length);
-            int headerSize = buffer[0] + (buffer[1] * 0x100);
+            //buffer = new byte[2];
+            //fs.Position = 0x08;
+            //fs.Read(buffer, 0, buffer.Length);
+            i = 8;
+            int headerSize = buffer[i] + (buffer[i + 1] * 0x100);
 
             // Размер записи
             //
-            buffer = new byte[2];
-            fs.Position = 0x10;
-            fs.Read(buffer, 0, buffer.Length);
-            int rowSize = buffer[0] + (buffer[1] * 0x100);
-
-            // Проверка последнего байта файла
-            //
-            buffer = new byte[1];
-            fs.Read(buffer, (int)(fs.Length - 1), 1);
-            if (buffer[0] != 0x1A)
-                throw new Exception("Файл повреждёт, последний байт файла не 0x1A");
+            //buffer = new byte[2];
+            //fs.Position = 0x10;
+            //fs.Read(buffer, 0, buffer.Length);
+            i = 10;
+            int rowLenght = buffer[i] + (buffer[i + 1] * 0x100);
 
             // Проверка последнего байта заголовка
             //
             buffer = new byte[1];
-            fs.Read(buffer, headerSize - 1, 1);
+            fs.Position = headerSize - 1;
+            fs.Read(buffer, 0, 1);      
             if (buffer[0] != 0x0D)
                 throw new Exception("Файл повреждёт, последний байт заголовка не 0x0D");
 
+            // Проверка последнего байта файла
+            //
+            buffer = new byte[1];
+            fs.Position = fs.Length - 1;
+            fs.Read(buffer, 0, 1);
+            if (buffer[0] != 0x1A)
+                throw new Exception("Файл повреждёт, последний байт файла не 0x1A");
+
             // Проверка данных заголовка (без учёта содержимого записей)
             //
-            if (fs.Length != (rowCount * rowSize + headerSize))
+            if (fs.Length != (rowCount * rowLenght + headerSize) + 1) // 1 это последний байт 1А
                 throw new Exception("Файл повреждёт, контрольная сумма количества записей, размера заголовка, размера записи не соответствует размеру файла");
-
+            fs.Close();
             return true;
         }
         #endregion
@@ -108,10 +115,22 @@ namespace DBF
 
         #region Загрузка заголовка в байт массиве
         public static byte[] LoadByteHeader(string path)
-        {            
+        {
             FileStream fs = new(path, FileMode.Open, FileAccess.Read);
-            byte[] buffer = new byte[fs.Length];
+
+            CheckForDBF(path);
+
+            byte[] buffer = new byte[2];
+            fs.Position = 0x08;
             fs.Read(buffer, 0, buffer.Length);
+            int headerSize = buffer[0] + (buffer[1] * 0x100);
+
+            buffer = new byte[headerSize];
+            fs.Read(buffer, 0, buffer.Length);
+            fs.Close();
+
+            return buffer;
+
             // Заполняем таблицу заголовка
             //
             buffer = new byte[1];
@@ -134,6 +153,54 @@ namespace DBF
         private static DataTable LoadHeader(string path)
         {
             DataTable headerTable = new();
+            headerTable.Columns.Add("№", typeof(int));
+            headerTable.Columns.Add("HEX", typeof(string));
+            headerTable.Columns.Add("DECIMAL", typeof(int));
+            headerTable.Columns.Add("Длинна байт", typeof(int));
+            headerTable.Columns.Add("Описание", typeof(string));
+
+            FileStream fs = new(path, FileMode.Open, FileAccess.Read)
+            {
+                Position = 0x00 //8
+            };
+            byte[] buffer = new byte[32];
+            fs.Read(buffer, 0, buffer.Length);
+
+            int i;
+            // Количество записей
+            i = 4;
+            int rowCount = buffer[i] + (buffer[i + 1] * 0x100) + (buffer[i + 2] * 0x10000) + (buffer[i + 3] * 0x1000000);
+
+            // Размер заголовка            
+            i = 8;
+            int headerSize = buffer[i] + (buffer[i + 1] * 0x100);
+
+            // Размер записи            
+            i = 10;
+            int rowLenght = buffer[i] + (buffer[i + 1] * 0x100);
+            
+            string bufferString = "";
+            for (int j = 16; j < 28; j++)
+            {
+                bufferString += buffer[j].ToString("X");
+            }
+            
+            headerTable.Rows.Add(1, buffer[0].ToString("X"), buffer[0], 1, "Простая(наверное) таблица");
+            headerTable.Rows.Add(2, buffer[1].ToString("X"), buffer[1], 1, "Год последнего обновления таблицы");
+            headerTable.Rows.Add(3, buffer[2].ToString("X"), buffer[2], 1, "Месяц последнего обновления таблицы");
+            headerTable.Rows.Add(4, buffer[3].ToString("X"), buffer[3], 1, "День последнего обновления таблицы");
+            headerTable.Rows.Add(5, rowCount.ToString("X"), rowCount, 4, "Количество записей в таблице");
+            headerTable.Rows.Add(6, headerSize.ToString("X"), headerSize, 2, "Размер заголовка в байтах");
+            headerTable.Rows.Add(7, rowLenght.ToString("X"), rowLenght, 2, "Размер записи в байтах");
+            headerTable.Rows.Add(8, buffer[12].ToString("X") + buffer[13].ToString("X"), buffer[12], 2, "Зарезервировано");
+            headerTable.Rows.Add(9, buffer[14].ToString("X"), buffer[14], 1, "Транзакция (начало 0х01, конец/игнорирование 0х00)");
+            headerTable.Rows.Add(10, buffer[15].ToString("X"), buffer[15], 1, "Нормальная видимость (0х00), закодированно (0х01)");
+            headerTable.Rows.Add(11, bufferString, buffer[16], 12, "Использование многопользовательского окружения");
+            headerTable.Rows.Add(12, buffer[28].ToString("X"), buffer[28], 1, "Индекс используется (0х01) или нет (0х00)");
+            headerTable.Rows.Add(13, buffer[29].ToString("X"), buffer[29], 1, "Кодовая страница, если 0x65 то Russian MS-DOS 866");
+            headerTable.Rows.Add(14, buffer[30].ToString("X") + buffer[31].ToString("X"), buffer[30], 2, "Зарезервировано");
+
+            fs.Close();
             return headerTable;
         }
         #endregion
@@ -226,8 +293,9 @@ namespace DBF
             extendedTable.Columns.Add("Size", Type.GetType("System.Int32"));
             extendedTable.Columns.Add("Decimal", Type.GetType("System.Int32"));
 
-            //СОЗДАЁМ ДОП ТАБЛИЦУ
+            //СОЗДАЁМ ТАБЛИЦУ КОЛОНОК
             //
+            #region Column Table
             int index = 0;
             for (int j = 0; j < columnCount; j++)
             {
@@ -280,13 +348,14 @@ namespace DBF
                     default: // неизвестный формат, или не реализованный, тут либо писать в string либо выдавать ошибку    
                         throw new Exception("Этот формат не реализован в программе! Сожалеем");
                         //dataColumn.DataType = Type.GetType("System.String");
-                        break;
+                        //break;
                 }
                 extRow[0] = dataColumn.ColumnName;
                 extendedTable.Rows.Add(extRow);
                 table.Columns.Add(dataColumn);
                 index += 32; //смещение на 32 байта к началу следующей колонки                
             }
+            #endregion
             //
             //ТАБЛИЦА СОЗДАНА
 
@@ -429,6 +498,7 @@ namespace DBF
             Console.WriteLine($"Time Spent: {sw.Elapsed}");
             set.Tables.Add(table);
             set.Tables.Add(extendedTable);
+            set.Tables.Add(LoadHeader(path));
 
             return set;
         }

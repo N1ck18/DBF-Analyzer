@@ -113,7 +113,7 @@ namespace DBF_Analyzer_WPF.ViewModels
         DataSet set = new();
         DataTable columnTable = new();
         DataTable workTable = new();
-        DataTable HeaderTable = new();
+        DataTable headerTable = new();
 
         // Таблица заголовка файла
         private DataView _HeaderView;
@@ -144,31 +144,33 @@ namespace DBF_Analyzer_WPF.ViewModels
         {
             OpenFileDialog openFile = new();
             if (openFile.ShowDialog() == true)
-            {                
+            {
                 try
                 {
                     set = DBF_Lib.LoadFile(openFile.FileName);
                 }
                 // Тут надо сделать обработчик ошибок
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    Exception ex = new("Ошибка при загрузке файла");
+                    throw new Exception(ex.Message);                    
                     Console.WriteLine(ex);
                     return;
                 }
                 set = DBF_Lib.LoadFile(openFile.FileName);
-                columnTable = set.Tables[1];                
-                workTable = set.Tables[0];                
+                headerTable = set.Tables[2];
+                columnTable = set.Tables[1];
+                workTable = set.Tables[0];
                 workTable = IndexedWorkTable(workTable);
-                //HeaderView = headerTable.DefaultView;
+                HeaderView = headerTable.DefaultView;
                 ColumnView = columnTable.DefaultView;
-                //ColumnTable.Visibility = Visibility.Visible;
+
                 RecordCount = workTable.Rows.Count;
 
                 View = workTable.DefaultView; //view модель, через него передаём ItemSource
-                                              //WorkTable.Visibility = Visibility.Visible;                
-                //DataContext = this; //все данные передаются в окно через этот параметр
 
+                //WorkTable.Visibility = Visibility.Visible;                
+                //DataContext = this; //все данные передаются в окно через этот параметр
+                //ColumnTable.Visibility = Visibility.Visible;
             }
         }
         #endregion
