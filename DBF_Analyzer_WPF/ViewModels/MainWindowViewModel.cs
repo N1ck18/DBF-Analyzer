@@ -152,20 +152,25 @@ namespace DBF_Analyzer_WPF.ViewModels
                 // Тут надо сделать обработчик ошибок
                 catch (Exception ex)
                 {
-                    throw new Exception(ex.Message);                    
-                    Console.WriteLine(ex);
-                    return;
+                    throw new Exception(ex.Message);
+                    //Console.WriteLine(ex);
+                    //return;
                 }
                 set = DBF_Lib.LoadFile(openFile.FileName);
                 headerTable = set.Tables[2];
                 columnTable = set.Tables[1];
                 workTable = set.Tables[0];
-                workTable = IndexedWorkTable(workTable);
-                HeaderView = headerTable.DefaultView;
-                ColumnView = columnTable.DefaultView;
 
+                // индексируем таблицы
+                workTable = IndexTable(workTable);
+                columnTable = IndexTable(columnTable);
+
+                //присваиваем данные для окна
                 RecordCount = workTable.Rows.Count;
 
+                // прикручиваем view модель
+                HeaderView = headerTable.DefaultView;
+                ColumnView = columnTable.DefaultView;
                 View = workTable.DefaultView; //view модель, через него передаём ItemSource
 
                 //WorkTable.Visibility = Visibility.Visible;                
@@ -175,10 +180,21 @@ namespace DBF_Analyzer_WPF.ViewModels
         }
         #endregion
 
+        #region Анализ файла
+        public ICommand AnalyzeButtonCommand { get; }
+        private bool CanAnalyzeButtonCommandExecute(object p) => true;
+        private void OnAnalyzeButtonCommandExecuted(object p)
+        {
+            workTable.Rows[0][1] = 5;
+            workTable.AcceptChanges();
+        }
+        #endregion
+
+
         // Обработчики
 
         #region Колонка индексов
-        private static DataTable IndexedWorkTable(DataTable dataTable)
+        private static DataTable IndexTable(DataTable dataTable)
         {
             dataTable.Columns.Add("№", typeof(string)).SetOrdinal(0);
             for (int i = 1; i <= dataTable.Rows.Count; i++)
@@ -193,6 +209,9 @@ namespace DBF_Analyzer_WPF.ViewModels
         {
             CloseApplicationCommand = new LambdaCommand(OnCloseApplicationCommandExecuted, CanCloseApplicationCommandExecute);
             OpenFileCommand = new LambdaCommand(OnOpenFileCommandExecuted, CanOpenFileCommandExecute);
+            AnalyzeButtonCommand = new LambdaCommand(OnAnalyzeButtonCommandExecuted, CanAnalyzeButtonCommandExecute);
         }
+
+
     }
 }

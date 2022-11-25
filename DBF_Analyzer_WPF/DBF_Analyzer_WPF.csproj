@@ -12,9 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\" />
-    <Folder Include="Models\" />
-    <Folder Include="Services\" />
+    <Folder Include="Data\Data\" />
+    <Folder Include="Models\Models\" />
+    <Folder Include="Services\Services\" />
   </ItemGroup>
 
   <ItemGroup>

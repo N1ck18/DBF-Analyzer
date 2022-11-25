@@ -31,7 +31,7 @@
                     <Separator/>
                     <MenuItem Header="Close" MinHeight="26" Command="{Binding CloseApplicationCommand}"></MenuItem>
                 </MenuItem>
-                <MenuItem Header="Analyze" MinWidth="50" MinHeight="26">
+                <MenuItem Header="Analyze" MinWidth="50" MinHeight="26" Command="{Binding AnalyzeButtonCommand}">
                 </MenuItem>
                 <MenuItem Header="About" MinWidth="50" MinHeight="26"/>
             </Menu>
@@ -63,7 +63,7 @@
                         <TextBlock>Header</TextBlock>
                     </TabItem.Header>
                     <TabItem.Content>
-                        <DataGrid x:Name="HeaderTable" ItemsSource="{Binding HeaderView, IsAsync=True}" IsReadOnly="True">
+                        <DataGrid x:Name="HeaderTable" ItemsSource="{Binding HeaderView, IsAsync=True}" IsReadOnly="True" AutoGeneratingColumn="OnAutoGeneratingColumn">
                             <DataGrid.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="Копировать"></MenuItem>
@@ -80,7 +80,7 @@
                         <TextBlock>Columns</TextBlock>
                     </TabItem.Header>
                     <TabItem.Content>
-                        <DataGrid x:Name="ColumnTable" AutoGenerateColumns="True" ItemsSource="{Binding ColumnView, IsAsync=True}" IsReadOnly="True">
+                        <DataGrid x:Name="ColumnTable" AutoGeneratingColumn="OnAutoGeneratingColumn" ItemsSource="{Binding ColumnView, IsAsync=True}" IsReadOnly="True">
                             <!--ItemsSource="{Binding Path=, IsAsync=True}" Visibility="Hidden" Background="LightGray"-->
                         </DataGrid>
                     </TabItem.Content>
@@ -91,7 +91,7 @@
                     </TabItem.Header>
                     <!--ItemsSource="{Binding View, IsAsync=True}" Visibility="Hidden"-->
                     <TabItem.Content>
-                        <DataGrid  x:Name="WorkTable" AutoGeneratingColumn="OnAutoGeneratingColumn"   ItemsSource="{Binding Path=View, IsAsync=True}" IsReadOnly="True" CanUserSortColumns="False"
+                        <DataGrid  x:Name="WorkTable" AutoGeneratingColumn="OnAutoGeneratingColumn" ItemsSource="{Binding Path=View, IsAsync=True}" IsReadOnly="True" CanUserSortColumns="False"
                               EnableRowVirtualization="True" EnableColumnVirtualization = "true"
                               BorderThickness="0" BorderBrush="#DFDFDF"
                               ScrollViewer.CanContentScroll="true" ScrollViewer.PanningMode="Both"

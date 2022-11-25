@@ -91,7 +91,7 @@ namespace DBF
             //
             buffer = new byte[1];
             fs.Position = headerSize - 1;
-            fs.Read(buffer, 0, 1);      
+            fs.Read(buffer, 0, 1);
             if (buffer[0] != 0x0D)
                 throw new Exception("Файл повреждёт, последний байт заголовка не 0x0D");
 
@@ -178,13 +178,13 @@ namespace DBF
             // Размер записи            
             i = 10;
             int rowLenght = buffer[i] + (buffer[i + 1] * 0x100);
-            
+
             string bufferString = "";
             for (int j = 16; j < 28; j++)
             {
                 bufferString += buffer[j].ToString("X");
             }
-            
+
             headerTable.Rows.Add(1, buffer[0].ToString("X"), buffer[0], 1, "Простая(наверное) таблица");
             headerTable.Rows.Add(2, buffer[1].ToString("X"), buffer[1], 1, "Год последнего обновления таблицы");
             headerTable.Rows.Add(3, buffer[2].ToString("X"), buffer[2], 1, "Месяц последнего обновления таблицы");
@@ -205,7 +205,7 @@ namespace DBF
         }
         #endregion
 
-
+        #region Исправление null записей в numeric
         //Исплавляем записи с данными, не соответствующими формату столбца
         //пример: в Numeric строке в байт коде стоят символы, вместо 20 20 20 20 20 20 стоит 6E 75 6C 6C 20 20 (null__)
         //
@@ -214,6 +214,8 @@ namespace DBF
             string result = "";
             return result;
         }
+
+        #endregion
 
         #region Загрузка файла, основной метод
         public static DataSet LoadFile(string path)
@@ -288,14 +290,15 @@ namespace DBF
 
             //Создаём дополнительную таблицу к основной со значениями размера поля и количества знаков после запятой для N формата
             //В одной таблице DataTabble это сделать нельзя никак
+            #region Column Table
             DataTable extendedTable = new();
             extendedTable.Columns.Add("Name", Type.GetType("System.String")); // на всякий
             extendedTable.Columns.Add("Size", Type.GetType("System.Int32"));
             extendedTable.Columns.Add("Decimal", Type.GetType("System.Int32"));
+            extendedTable.Columns.Add("Description", typeof(string));
 
             //СОЗДАЁМ ТАБЛИЦУ КОЛОНОК
-            //
-            #region Column Table
+            //            
             int index = 0;
             for (int j = 0; j < columnCount; j++)
             {
@@ -306,6 +309,7 @@ namespace DBF
                 };
                 extRow[1] = buffer[index + 16]; //Размер поля
                 extRow[2] = buffer[index + 17]; //Количество знаков после запятой
+                extRow[3] = ""; // Описание (служебный столбец), по-умолчанию пусто. Можно заполнить в основной программе используя словать, например
 
                 // т.к. в заголовке, в отличии от записей, все не используемые символы записываются как 0x00 и идут строго после данных, мы можем просто их отбросить
                 for (int i = 0; i < 11; i++) //Находим имя
@@ -363,6 +367,7 @@ namespace DBF
             Console.WriteLine($"Time Spent: {sw.Elapsed}");
             sw.Restart(); //Перезапуск проверки
 
+            #region Work Table
             //Заполняем таблицу данными
             //
             //
@@ -412,46 +417,126 @@ namespace DBF
                         //Всё записано в кодировке 866 Russian MS-DOS, при использовании ASCII кодировки энкодер понимает только латинский алфавит
                         //Проверяем на пустые значения, если верно то пишем DBNull.Value(!только так!) везде кроме C (string) формата
                         //
+                        //
+                        //ВНИМАНИЕ!!! проверка try catch идёт на поля не строкового формата. Иногда в любом другом формате можно встретить ячейки вида null                        
+                        //пример: в Numeric строке в байт коде стоят символы 6E 75 6C 6C 20 20 (null__), вместо 20 20 20 20 20 20
+                        //
                         case "System.DateTime":
                             if (stringValue.Replace(" ", "") == "") //Проверка на пустую строку                            
                                 row[i] = DBNull.Value;
                             else
-                                row[i] = DateTime.ParseExact(stringValue, "yyyyMMdd", dfi);
+                                try
+                                {
+                                    row[i] = DateTime.ParseExact(stringValue, "yyyyMMdd", dfi);
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (stringValue.Replace(" ", "") == "null")
+                                    {
+                                        row[i] = DBNull.Value;
+                                    }
+                                    else
+                                        throw new Exception($"{ex.Message} \n Строка: {j}, Колонка: {table.Columns[i].ColumnName}, Значение: {stringValue}");
+                                }
                             break;
 
                         case "System.Double":                                                     //ВНИМАНИЕ!!!!!!! не протестированно!
                             if (stringValue.Replace(" ", "") == "") //Проверка на пустую строку                            
                                 row[i] = DBNull.Value;
                             else
-                                row[i] = double.Parse(stringValue.Replace(".", ","));
+                                try
+                                {
+                                    row[i] = double.Parse(stringValue, nfi);
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (stringValue.Replace(" ", "") == "null")
+                                    {
+                                        row[i] = DBNull.Value;
+                                    }
+                                    else
+                                        throw new Exception($"{ex.Message} \n Строка: {j}, Колонка: {table.Columns[i].ColumnName}, Значение: {stringValue}");
+                                }
                             break;
 
                         case "System.Boolean":                                                    //ВНИМАНИЕ!!!!!!! не протестированно!                            
                             if (stringValue.Replace(" ", "") == "") //Проверка на пустую строку                            
                                 row[i] = DBNull.Value;
                             else
-                                row[i] = bool.Parse(stringValue);
+                                try
+                                {
+                                    row[i] = bool.Parse(stringValue);
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (stringValue.Replace(" ", "") == "null")
+                                    {
+                                        row[i] = DBNull.Value;
+                                    }
+                                    else
+                                        throw new Exception($"{ex.Message} \n Строка: {j}, Колонка: {table.Columns[i].ColumnName}, Значение: {stringValue}");
+                                }
                             break;
 
                         case "System.Int32":
                             if (stringValue.Replace(" ", "") == "") //Проверка на пустую строку
                                 row[i] = DBNull.Value;
                             else
-                                row[i] = int.Parse(stringValue);
+                                try
+                                {
+                                    // Отключено на всякий случай
+                                    //row[i] = int.Parse(stringValue.Replace(".", ""), nfi);
+                                    row[i] = int.Parse(stringValue, nfi);
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (stringValue.Replace(" ", "") == "null")
+                                    {
+                                        row[i] = DBNull.Value;
+                                    }
+                                    else                                        
+                                        throw new Exception($"{ex.Message} \n Строка: {j}, Колонка: {table.Columns[i].ColumnName}, Значение: {stringValue}");
+                                }
                             break;
 
                         case "System.Int64":
                             if (stringValue.Replace(" ", "") == "") //Проверка на пустую строку
                                 row[i] = DBNull.Value;
                             else
-                                row[i] = long.Parse(stringValue);
+                                try
+                                {
+                                    // Отключено на всякий случай
+                                    //row[i] = long.Parse(stringValue.Replace(".", ""), nfi);
+                                    row[i] = long.Parse(stringValue, nfi);
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (stringValue.Replace(" ", "") == "null")
+                                    {
+                                        row[i] = DBNull.Value;
+                                    }
+                                    else
+                                        throw new Exception($"{ex.Message} \n Строка: {j}, Колонка: {table.Columns[i].ColumnName}, Значение: {stringValue}");
+                                }                            
                             break;
 
                         case "System.Decimal":
                             if (stringValue.Replace(" ", "") == "") //Проверка на пустую строку
                                 row[i] = DBNull.Value;
                             else
-                                row[i] = decimal.Parse(stringValue, nfi);
+                                try
+                                {
+                                    row[i] = decimal.Parse(stringValue, nfi);
+                                }
+                                catch (Exception ex)
+                                {
+                                    if (stringValue.Replace(" ", "") == "null")
+                                    {
+                                        row[i] = DBNull.Value;
+                                    }
+                                    else
+                                        throw new Exception($"{ex.Message} \n Строка: {j}, Колонка: {table.Columns[i].ColumnName}, Значение: {stringValue}");
+                                }                            
                             break;
 
                         case "System.String":
@@ -484,14 +569,16 @@ namespace DBF
                             break;
                         default: // неизвестный формат, или не реализованный, тут либо писать в string либо выдавать ошибку                            
                             //row[i] = stringValue;                            
-                            throw new Exception("Запись неизвестного формата");
-                            break;
+                            throw new Exception($"Запись неизвестного формата \n Строка: {j}, Колонка: {table.Columns[i].ColumnName}, Значение: {stringValue}");                            
+                            //break;
                     }
                     index += rowSize;
                 }
                 table.Rows.Add(row);
             }
             table.EndLoadData();
+
+            #endregion            
             //ТАБЛИЦА СОЗДАНА
 
             sw.Stop();
