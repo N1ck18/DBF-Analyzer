@@ -1,0 +1,9 @@
+{
+  "CellName": "UKL",
+  "Cell_Controls": {
+    "Values": [ 3, 1 ],
+    "TargetCell": "MES",
+    "TargetCellValues": [ 225000, 145600 ],
+    "Extended": ""
+  }
+} 

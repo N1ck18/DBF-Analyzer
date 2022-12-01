@@ -1,5 +1,6 @@
 ﻿using DBF;
 using DBF_Analyzer_WPF.Infrastructure.Commands;
+using DBF_Analyzer_WPF.Services;
 using DBF_Analyzer_WPF.ViewModels.Base;
 using Microsoft.Win32;
 using System;
@@ -165,7 +166,7 @@ namespace DBF_Analyzer_WPF.ViewModels
                 workTable = IndexTable(workTable);
                 columnTable = IndexTable(columnTable);
 
-                //присваиваем данные для окна
+                // присваиваем данные для окна
                 RecordCount = workTable.Rows.Count;
 
                 // прикручиваем view модель
@@ -185,6 +186,19 @@ namespace DBF_Analyzer_WPF.ViewModels
         private bool CanAnalyzeButtonCommandExecute(object p) => true;
         private void OnAnalyzeButtonCommandExecuted(object p)
         {
+            
+            //bool result = (true && false) || false;
+            //string colName = "UKL";
+            //string 
+
+            //if (workTable.Columns.Contains(colName))
+            //{
+            //    if (workTable.Rows[0][colName] )
+            //    {
+
+            //    }
+            //    workTable.Rows[0][colName] 
+            //}
             workTable.Rows[0][1] = 5;
             workTable.AcceptChanges();
         }
