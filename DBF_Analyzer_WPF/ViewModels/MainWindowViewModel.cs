@@ -17,6 +17,13 @@ namespace DBF_Analyzer_WPF.ViewModels
     internal class MainWindowViewModel : ViewModel
     {
         // Основные
+        #region Переменные
+        DataSet set = new();
+        DataTable columnTable = new();
+        DataTable workTable = new();
+        DataTable headerTable = new();
+        List<Cell> CellControl = new();
+        #endregion
 
         #region Title - Заголовок окна
         /// <summary>
@@ -109,12 +116,7 @@ namespace DBF_Analyzer_WPF.ViewModels
         #endregion
 
         #region Load File
-        public ICommand OpenFileCommand { get; }
-
-        DataSet set = new();
-        DataTable columnTable = new();
-        DataTable workTable = new();
-        DataTable headerTable = new();
+        public ICommand OpenFileCommand { get; }           
 
         // Таблица заголовка файла
         private DataView _HeaderView;
@@ -144,6 +146,8 @@ namespace DBF_Analyzer_WPF.ViewModels
         private void OnOpenFileCommandExecuted(object p)
         {
             OpenFileDialog openFile = new();
+            openFile.DefaultExt = "json";            
+            //openFile.Filter = "Json files (*.json)|*.json|All files (*.*)|*.*";
             if (openFile.ShowDialog() == true)
             {
                 try
@@ -172,21 +176,18 @@ namespace DBF_Analyzer_WPF.ViewModels
                 // прикручиваем view модель
                 HeaderView = headerTable.DefaultView;
                 ColumnView = columnTable.DefaultView;
-                View = workTable.DefaultView; //view модель, через него передаём ItemSource
-
-                //WorkTable.Visibility = Visibility.Visible;                
-                //DataContext = this; //все данные передаются в окно через этот параметр
-                //ColumnTable.Visibility = Visibility.Visible;
+                View = workTable.DefaultView; //view модель, через него передаём ItemSource                
             }
         }
         #endregion
 
-        #region Анализ файла
+        #region Анализ файла        
+
         public ICommand AnalyzeButtonCommand { get; }
         private bool CanAnalyzeButtonCommandExecute(object p) => true;
         private void OnAnalyzeButtonCommandExecuted(object p)
         {
-            
+
             //bool result = (true && false) || false;
             //string colName = "UKL";
             //string 
@@ -204,6 +205,54 @@ namespace DBF_Analyzer_WPF.ViewModels
         }
         #endregion
 
+        #region Открытие контролей
+        public ICommand OpenControlsFileCommand { get; }
+        private bool CanOpenControlsFileCommandExecute(object p) => true;
+        private void OnOpenControlsFileCommandExecuted(object p)
+        {
+            OpenFileDialog openFile = new();
+            if (openFile.ShowDialog() == true)
+            {
+                try
+                {
+                    CellControl = JsonReader.JsonRead(openFile.FileName);
+                }
+                // Тут надо сделать обработчик ошибок
+                catch (Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                    //Console.WriteLine(ex);
+                    //return;
+                }
+            }
+        }
+        #endregion
+
+        #region Сохранение контролей
+        public ICommand SaveControlsFileCommand { get; }
+        private bool CanSaveControlsFileCommandExecute(object p) => true;
+        private void OnSaveControlsFileCommandExecuted(object p)
+        {
+            SaveFileDialog saveFileDialog = new ();
+            saveFileDialog.Filter = "Json files (*.json)|*.json|All files (*.*)|*.*";
+            saveFileDialog.DefaultExt = "json";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+               
+                try
+                {
+                    JsonSaver.JsonSave(CellControl, saveFileDialog.FileName);
+                }
+                // Тут надо сделать обработчик ошибок
+                catch (Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                    //Console.WriteLine(ex);
+                    //return;
+                }
+            }            
+        }
+        #endregion
 
         // Обработчики
 
@@ -224,6 +273,8 @@ namespace DBF_Analyzer_WPF.ViewModels
             CloseApplicationCommand = new LambdaCommand(OnCloseApplicationCommandExecuted, CanCloseApplicationCommandExecute);
             OpenFileCommand = new LambdaCommand(OnOpenFileCommandExecuted, CanOpenFileCommandExecute);
             AnalyzeButtonCommand = new LambdaCommand(OnAnalyzeButtonCommandExecuted, CanAnalyzeButtonCommandExecute);
+            OpenControlsFileCommand = new LambdaCommand(OnOpenControlsFileCommandExecuted, CanOpenControlsFileCommandExecute);
+            SaveControlsFileCommand = new LambdaCommand(OnSaveControlsFileCommandExecuted, CanSaveControlsFileCommandExecute);
         }
 
 

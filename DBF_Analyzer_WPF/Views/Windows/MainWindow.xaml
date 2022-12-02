@@ -25,6 +25,8 @@
                         <!--Click="Open_File"-->
                     </MenuItem>
                     <MenuItem Header="Safe to DBF" MinHeight="26"></MenuItem>
+                    <MenuItem Header="Load Controls"  MinHeight="30" Command="{Binding OpenControlsFileCommand}"></MenuItem>
+                    <MenuItem Header="Save Controls"  MinHeight="30" Command="{Binding SaveControlsFileCommand}"></MenuItem>
                     <MenuItem Header="Properties" MinHeight="26"></MenuItem>
                     <CheckBox x:Name="edit" MinHeight="26" VerticalContentAlignment="Center" IsThreeState="False" BorderThickness="0" Content="Edit mode" Unchecked="Edit_Off" Checked="Edit_On" IsChecked="False">
                     </CheckBox>
@@ -108,6 +110,25 @@
                         Background="Transparent"
                              AlternationCount="2"-->
 
+                        </DataGrid>
+                    </TabItem.Content>
+                </TabItem>
+                <TabItem MinWidth="100" MinHeight="30">
+                    <TabItem.Header>
+                        <TextBlock>Errors Table</TextBlock>
+                    </TabItem.Header>
+                    <!--ItemsSource="{Binding View, IsAsync=True}" Visibility="Hidden"-->
+                    <TabItem.Content>
+                        <DataGrid  x:Name="ErrorsTable" AutoGeneratingColumn="OnAutoGeneratingColumn" ItemsSource="{Binding Path=ErrorsView, IsAsync=True}" IsReadOnly="True" CanUserSortColumns="False"
+                              EnableRowVirtualization="True" EnableColumnVirtualization = "true"
+                              BorderThickness="0" BorderBrush="#DFDFDF"
+                              ScrollViewer.CanContentScroll="true" ScrollViewer.PanningMode="Both"
+                              VerticalGridLinesBrush="#DFDFDF" HorizontalGridLinesBrush="#DFDFDF"
+                              HeadersVisibility="Column"  
+                              CanUserAddRows="False" CanUserDeleteRows="False" 
+                              VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.IsContainerVirtualizable="True" VirtualizingPanel.ScrollUnit="Pixel"
+                              VirtualizingPanel.CacheLengthUnit="Pixel" VirtualizingPanel.IsVirtualizingWhenGrouping="True"
+                              >
                         </DataGrid>
                     </TabItem.Content>
                 </TabItem>
