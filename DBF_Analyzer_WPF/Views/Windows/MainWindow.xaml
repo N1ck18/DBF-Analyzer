@@ -31,7 +31,7 @@
                     <Separator/>
                     <MenuItem Header="Close" MinHeight="26" Command="{Binding CloseApplicationCommand}"></MenuItem>
                 </MenuItem>
-                <MenuItem Header="Analyze" MinWidth="50" MinHeight="26">
+                <MenuItem Header="Analyze" MinWidth="50" MinHeight="26" Command="{Binding AnalyzeButtonCommand}">
                 </MenuItem>
                 <MenuItem Header="About" MinWidth="50" MinHeight="26"/>
             </Menu>
@@ -91,7 +91,7 @@
                     </TabItem.Header>
                     <!--ItemsSource="{Binding View, IsAsync=True}" Visibility="Hidden"-->
                     <TabItem.Content>
-                        <DataGrid  x:Name="WorkTable" AutoGeneratingColumn="OnAutoGeneratingColumn"   ItemsSource="{Binding Path=View, IsAsync=True}" IsReadOnly="True" CanUserSortColumns="False"
+                        <DataGrid  x:Name="WorkTable" AutoGeneratingColumn="OnAutoGeneratingColumn" ItemsSource="{Binding Path=View, IsAsync=True}" IsReadOnly="True" CanUserSortColumns="False"
                               EnableRowVirtualization="True" EnableColumnVirtualization = "true"
                               BorderThickness="0" BorderBrush="#DFDFDF"
                               ScrollViewer.CanContentScroll="true" ScrollViewer.PanningMode="Both"

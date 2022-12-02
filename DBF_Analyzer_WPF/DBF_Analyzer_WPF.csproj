@@ -12,9 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\Data\" />
-    <Folder Include="Models\Models\" />
-    <Folder Include="Services\Services\" />
+    <Folder Include="Data\" />
+    <Folder Include="Models\" />
   </ItemGroup>
 
   <ItemGroup>

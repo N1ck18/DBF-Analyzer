@@ -1,5 +1,6 @@
 ﻿using DBF;
 using DBF_Analyzer_WPF.Infrastructure.Commands;
+using DBF_Analyzer_WPF.Services;
 using DBF_Analyzer_WPF.ViewModels.Base;
 using Microsoft.Win32;
 using System;
@@ -152,7 +153,7 @@ namespace DBF_Analyzer_WPF.ViewModels
                 // Тут надо сделать обработчик ошибок
                 catch (Exception ex)
                 {
-                    throw new Exception(ex.Message);                    
+                    throw new Exception(ex.Message);
                     //Console.WriteLine(ex);
                     //return;
                 }
@@ -162,10 +163,10 @@ namespace DBF_Analyzer_WPF.ViewModels
                 workTable = set.Tables[0];
 
                 // индексируем таблицы
-                workTable = IndexTable(workTable);                
+                workTable = IndexTable(workTable);
                 columnTable = IndexTable(columnTable);
 
-                //присваиваем данные для окна
+                // присваиваем данные для окна
                 RecordCount = workTable.Rows.Count;
 
                 // прикручиваем view модель
@@ -179,6 +180,30 @@ namespace DBF_Analyzer_WPF.ViewModels
             }
         }
         #endregion
+
+        #region Анализ файла
+        public ICommand AnalyzeButtonCommand { get; }
+        private bool CanAnalyzeButtonCommandExecute(object p) => true;
+        private void OnAnalyzeButtonCommandExecuted(object p)
+        {
+            
+            //bool result = (true && false) || false;
+            //string colName = "UKL";
+            //string 
+
+            //if (workTable.Columns.Contains(colName))
+            //{
+            //    if (workTable.Rows[0][colName] )
+            //    {
+
+            //    }
+            //    workTable.Rows[0][colName] 
+            //}
+            workTable.Rows[0][1] = 5;
+            workTable.AcceptChanges();
+        }
+        #endregion
+
 
         // Обработчики
 
@@ -198,6 +223,9 @@ namespace DBF_Analyzer_WPF.ViewModels
         {
             CloseApplicationCommand = new LambdaCommand(OnCloseApplicationCommandExecuted, CanCloseApplicationCommandExecute);
             OpenFileCommand = new LambdaCommand(OnOpenFileCommandExecuted, CanOpenFileCommandExecute);
+            AnalyzeButtonCommand = new LambdaCommand(OnAnalyzeButtonCommandExecuted, CanAnalyzeButtonCommandExecute);
         }
+
+
     }
 }
